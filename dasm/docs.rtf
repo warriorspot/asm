@@ -1,0 +1,325 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\froman\fcharset0 Times New Roman;}{\f1\fswiss\fcharset0 Courier New;}{\f2\fnil\fcharset0 Calibri;}{\f3\fnil\fcharset2 Symbol;}}
+{\*\generator Riched20 10.0.10586}\viewkind4\uc1 
+\pard\keepn\sb100\sa100\kerning36\b\f0\fs48 DOCUMENTATION FOR DASM V2.12\line a high level macro cross assembler for 6502 \par
+
+\pard\sb100\sa100\kerning0\b0\fs24 (C)Copyright 1987,1988 Matthew Dillon, All Rights Reserved\line Modified by Peter King for the Scholar programme of Heriot-Watt University \par
+FEATURES: \par
+
+\pard{\pntext\f3\'B7\tab}{\*\pn\pnlvlblt\pnf3\pnindent360{\pntxtb\'B7}}\fi-360\li720\sb100\sa100 fast assembly \par
+{\pntext\f3\'B7\tab}takes as many passes as needed \par
+{\pntext\f3\'B7\tab}multiple segments, BSS segments (no generation), relocatable origin \par
+{\pntext\f3\'B7\tab}expressions, as in C but [] is used instead of () for parenthesis. (all expressions are computed with 32 bit integers) \par
+{\pntext\f3\'B7\tab}-no real limitation on label size, label values are 32 bits \par
+{\pntext\f3\'B7\tab}-complex pseudo-ops, repeat loops, macros, etc....\par
+
+\pard\sb100\sa100 COMMAND LINE: \par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631\b\f1\fs20\par
+\tab dasm srcfile [options]\par
+
+\pard\keepn\sb100\sa100\f0\fs36 options \par
+
+\pard\sb100\sa100\fs24 -o\b0\i name\i0\par
+
+\pard\li360\sb100\sa100 select output file \i name\i0\par
+
+\pard\sb100\sa100\b -l\b0\i name\i0\par
+
+\pard\li360\sb100\sa100 select list file \i name\i0  (else none generated)\par
+
+\pard\sb100\sa100\b -s\b0\i name\i0\par
+
+\pard\li360\sb100\sa100 select symbol dump file \i name\i0  (else none generated)\par
+
+\pard\sb100\sa100\b -v\b0 # \par
+
+\pard\li360\sb100\sa100 select verboseness 0-4 (default 0, see below)\par
+
+\pard\sb100\sa100 Example: \par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631\f1\fs20     dasm master.asm -omaster.bin -lmaster.lst -v3\par
+
+\pard\keepn\sb100\sa100\b\f0\fs36 VERBOSE OPTIONS: \par
+
+\pard\sb100\sa100\fs24 0\b0  (default) Only warnings and errors are generated \b 1\b0  \par
+
+\pard{\pntext\f3\'B7\tab}{\*\pn\pnlvlblt\pnf3\pnindent360{\pntxtb\'B7}}\fi-360\li720\sb100\sa100 Segment list information generated after each pass \par
+{\pntext\f3\'B7\tab}Include file names are displayed \par
+{\pntext\f3\'B7\tab}statistics on why the assembler is going to make another pass\line R1,R2 reason code: R3\line where R1 is the number of times the assembler encountered something requiring another pass to resolve. R2 is the number of references to unknown symbols which occurred in the pass (but only R1 determines the need for another pass). R3 is a BITMASK of the reasons why another pass is required. See the end of this document for bit designations. \par
+
+\pard\sb100\sa100\b 2\b0  mismatches between program labels and equates are displayed on every pass (usually none occur in the first pass unless you have re-declared a symbol name). \par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631\f1\fs20\tab displayed information for symbols:\par
+\tab     ???? = unknown value\par
+\tab     str  = symbol is a string\par
+\tab     eqm  = symbol is an eqm macro\par
+\tab     (r)  = symbol has been referenced\par
+\tab     (s)  = symbol created with SET or EQM pseudo-op\par
+
+\pard\sb100\sa100\b\f0\fs24 3\b0  Unresolved and unreferenced symbols are displayed every pass (unsorted, sorry) \b 4\b0  An entire symbol list is displayed every pass to STDOUT. (unsorted, sorry) \par
+
+\pard\keepn\sb100\sa100\b\fs36 SEGMENTS: \par
+
+\pard\sb100\sa100\b0\fs24 The SEG pseudo-op creates/sets the current segment. Each segment has it's own origin and is optionally an `uninitialized' segment. Uninitialized segments produce no output and have no restrictions. This is useful for determining the size of a certain assembly sequence without generating code, and for assigning RAM to labels. \par
+'Initialized' segments produce output. The following should be considered when generating code: \par
+
+\pard 
+{\pntext\f0 1.\tab}{\*\pn\pnlvlbody\pnf0\pnindent360\pnstart1\pndec{\pntxta.}}
+\fi-360\li720\sb100\sa100 The default fill character when using ORG to skip forward is 00. This is a GLOBAL default and effects all segments. See ORG. \par
+{\pntext\f0 2.\tab}The default fill character for DS is 00 and is independent of the default fill character for ORG (see DS). \par
+
+\pard\keepn\sb100\sa100\b\fs36 GENERAL: \par
+
+\pard\sb100\sa100\b0\fs24 Most everything is recursive. You cannot have a macro DEFINITION within a macro definition, but can nest macro calls, repeat loops, and include files. \par
+The other major feature in this assembler is the SUBROUTINE pseudo-op, which logically separates local labels (starting with a dot). This allows you to reuse label names (for example, .1 .fail) rather than think up crazy combinations of the current subroutine to keep it all unique. Almost nothing need be resolved in pass 1. The assembler will make multiple passes in an attempt to resolve the assembly (including just one pass if everything is resolved immediately). \par
+
+\pard\keepn\sb100\sa100\b\fs36 PSEUDO-OPS: \par
+
+\pard\sb100\sa100\b0\fs24 INCLUDE "name"\par
+
+\pard\li360\sb100\sa100 Include another assembly file. \par
+
+\pard\sb100\sa100 [label] SEG[.U] name\par
+
+\pard\li360\sb100\sa100 This sets the current segment, creating it if necessary. If a .U extension is specified on segment creation, the segment is an UNINITIALIZED segment. The .U is not needed when going back to an already created uninitialized segment, though it makes the code more readable. \par
+
+\pard\sb100\sa100 [label] DC[.BWL] exp,exp,exp ...\par
+
+\pard\li360\sb100\sa100 Declare data in the current segment. No output is generated if within a .U segment. Note that the byte ordering for the selected processor is used for each entry. \par
+The default size extension is a byte. \par
+
+\pard\sb100\sa100 [label] DS[.BWL] exp[,filler]\par
+
+\pard\li360\sb100\sa100 declare space (default filler is 0). Data is not generated if within an uninitialized segment. Note that the number of bytes generated is exp * entrysize (1,2, or 4) \par
+The default size extension is a byte. \par
+Note that the default filler is always 0 (has nothing to do with the ORG default filler). \par
+
+\pard\sb100\sa100 [label] DV[.BWL] eqmlabel exp,exp,exp....\par
+
+\pard\li360\sb100\sa100 This is equivalent to DC, but each exp in the list is passed through the symbolic expression specified by the EQM label. The expression is held in a special symbol dotdot '..' on each call to the EQM label. \par
+See EQM below \par
+
+\pard\sb100\sa100 [label] HEX hh hh hh..\par
+
+\pard\li360\sb100\sa100 This sets down raw HEX data. Spaces are optional between bytes. NO EXPRESSIONS are allowed. Note that you do NOT place a $ in front of the digits. This is a short form for creating tables compactly. Data is always laid down on a byte-by-byte basis. \par
+
+\pard\li360\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631\f1\fs20\tab     Example:\tab     HEX 1A45 45 13254F 3E12\par
+
+\pard\sb100\sa100\f0\fs24 ERR\par
+
+\pard\li360\sb100\sa100 Abort assembly.\par
+
+\pard\sb100\sa100 [label] ORG exp[,DefaultFillVal]\par
+
+\pard\li360\sb100\sa100 This pseudo-op sets the current origin. You can also set the global default fill character (a byte value) with this pseudo-op. NOTE that no filler is generated until the first data-generating opcode/pseudo-op is encountered after this one. Sequences like: \par
+
+\pard\li360\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631\f1\fs20\tab org  0,255\par
+\tab org  100,0\par
+\tab org  200\par
+\tab dc   23\par
+
+\pard\li360\sb100\sa100\f0\fs24 will result in 200 zero's and a 23. This allows you to specify some ORG, then change your mind and specify some other (lower address) ORG without causing an error (assuming nothing is generated in between). \par
+Normally, DS and ALIGN are used to generate specific filler values. \par
+
+\pard\sb100\sa100 [label] RORG exp\par
+
+\pard\li360\sb100\sa100 This activates the relocatable origin. All generated addresses, including '.', although physically placed at the true origin, will use values from the relocatable origin. While in effect both the physical origin and relocatable origin are updated. \par
+The relocatable origin can skip around (no limitations). The relocatable origin is a function of the segment. That is, you can still SEG to another segment that does not have a relocatable origin activated, do other (independent) stuff there, and then switch back to the current segment and continue where you left off. \par
+
+\pard\sb100\sa100 ECHO exp,exp,exp\par
+
+\pard\li360\sb100\sa100 The expressions (which may also be strings), are echoed on the screen and into the list file\par
+
+\pard\sb100\sa100 [label] REND\par
+
+\pard\li360\sb100\sa100 Deactivate the relocatable origin for the current segment. Generation uses the real origin for reference.\par
+
+\pard\sb100\sa100 [label] ALIGN N[,fill]\par
+
+\pard\li360\sb100\sa100 Align the current PC to an N byte boundary. The default fill character is always 0, and has nothing to do with the default fill character specifiable in an ORG.\par
+
+\pard\sb100\sa100 [label] SUBROUTINE name\par
+
+\pard\li360\sb100\sa100 This isn't really a subroutine, but a boundary between sets of temporary labels (which begin with a dot). Temporary label names are unique within segments of code bounded by SUBROUTINE: \par
+
+\pard\li360\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631\f1\fs20\par
+\tab\tab CHARLIE subroutine\par
+\tab\tab\tab ldx #10\par
+\tab\tab .1\tab dex\par
+\tab\tab\tab bne .1\par
+\tab\tab BEN\tab subroutine\par
+\tab\tab\tab ldx #20\par
+\tab\tab .qq\tab dex\par
+\tab\tab\tab bne .qq\par
+
+\pard\li360\sb100\sa100\f0\fs24 Automatic temporary label boundaries occur for each macro level. Usually temporary labels are used in macros and within actual subroutines (so you don't have to think up a thousand different names)\par
+
+\pard\sb100\sa100 symbol EQU exp\par
+
+\pard\li360\sb100\sa100 The expression is evaluated and the result assigned to the symbol.\par
+
+\pard\sb100\sa100 symbol EQM exp\par
+
+\pard\li360\sb100\sa100 The STRING representing the expression is assigned to the symbol. Occurrences of the label in later expressions causes the string to be evaluated for each occurrence. Also used in conjunction with the DV psuedo-op.\par
+
+\pard\sb100\sa100 symbol SET exp\par
+
+\pard\li360\sb100\sa100 Same as EQU, but the symbol may be reassigned later.\par
+
+\pard\sb100\sa100 MAC name\par
+
+\pard\li360\sb100\sa100 Declare a macro. lines between MAC and ENDM are the macro. You cannot recursively declare a macro. You CAN recursively use a macro (reference a macro in a macro). No label is allowed to the left of MAC or ENDM. \par
+Arguments passed to macros are referenced with: \{#\}. The first argument passed to a macro would thus be \{1\}. You should always use LOCAL labels (.name) inside macros which you use more than once. \{0\} represents an EXACT substitution of the ENTIRE argument line. \par
+
+\pard\sb100\sa100 ENDM\par
+
+\pard\li360\sb100\sa100 end of macro definition. NO LABEL ALLOWED ON THE LEFT!\par
+
+\pard\sb100\sa100 MEXIT\par
+
+\pard\li360\sb100\sa100 Used in conjunction with conditionals. Exits the current macro\par
+
+\pard\sb100\sa100 level. \par
+[label] IFCONST exp\par
+
+\pard\li360\sb100\sa100 Is TRUE if the expression result is defined, FALSE otherwise and NO error is generated if the expression is undefined.\par
+
+\pard\sb100\sa100 [label] IFNCONST exp\par
+
+\pard\li360\sb100\sa100 Is TRUE if the expression result is undefined, FALSE otherwise and NO error is generated if the expression is undefined.\par
+
+\pard\sb100\sa100 [label] IF exp\par
+
+\pard\li360\sb100\sa100 Is TRUE if the expression result is defined AND non-zero. Is FALSE if the expression result is defined AND zero. Neither IF or ELSE will be executed if the expression result is undefined. If the expression is undefined, another assembly pass is automatically taken.\par
+
+\pard\sb100\sa100 [label] ELSE\par
+
+\pard\li360\sb100\sa100 ELSE the current IF.\par
+
+\pard\sb100\sa100 [label] ENDIF\line [label] EIF\par
+
+\pard\li360\sb100\sa100 Terminate an IF. ENDIF and EIF are equivalent.\par
+
+\pard\sb100\sa100 [label] REPEAT exp\line [label] REPEND\par
+
+\pard\li360\sb100\sa100 Repeat code between REPEAT/REPEND 'exp' times. if exp == 0, the code repeats forever. exp is evaluated once. \par
+
+\pard\li360\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631\f1\fs20\tab Y   SET     0\par
+\tab     REPEAT  10\par
+\tab X   SET     0\par
+\tab     REPEAT  10\par
+\tab     DC\tab     X,Y\par
+\tab X   SET     X + 1\par
+\tab     REPEND\par
+\tab Y   SET     Y + 1\par
+\tab     REPEND\par
+
+\pard\li360\sb100\sa100\f0\fs24 generates an output table: 0,0 1,0 2,0 ... 9,0 0,1 1,1 2,1 ... 9,1, etc... \par
+Labels within a REPEAT/REPEND should be temporary labels with a SUBROUTINE pseudo-op to keep them unique. \par
+The Label to the left of REPEND is assigned AFTER the loop FINISHES. \par
+
+\pard\sb100\sa100 [label] XXX[.force] operand\par
+
+\pard\li360\sb100\sa100 XXX is some mnemonic, not necessarily three characters long. The .FORCE optional extension is used to force specific addressing modes (see below).\par
+
+\pard\keepn\sb100\sa100\b\fs36 GENERAL: \par
+
+\pard\sb100\sa100\b0\fs24 The label will be set to the current ORG/RORG either before or after a pseudo-op is executed. Most of the time, the label to the left of a pseudo-op is the current ORG/RORG. The following pseudo-ops labels are created AFTER execution of the pseudo-op: \par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631\f1\fs20\tab SEG, ORG, RORG, REND, ALIGN\par
+
+\pard\keepn\sb100\sa100\b\f0\fs36 ASSEMBLER PASSES: \par
+
+\pard\sb100\sa100\b0\fs24 The assembler may have to make several passes through the source code to resolve all generation. The number of passes is not limited to two. Since this may result in an unexpected, verbose option 2, 3, and 4 have been provided to allow determination of the cause. The assembler will give up if it thinks it can't do the assembly in *any* number of passes. \par
+Error reporting could be better.... \par
+
+\pard\keepn\sb100\sa100\b\fs36 EXPRESSIONS: \par
+
+\pard\sb100\sa100\b0\fs24 [] may be used to group expressions. The precedence of operators is the same as for the C language in almost all respects. Use brackets [] when you are unsure. The reason () cannot be used to group expressions is due to a conflict with the 6502 and other assembly languages. \par
+Some operators, such as ||, can return a resolved value even if one of the expressions is not resolved. Operators are as follows: \par
+NOTE WELL! Some operations will result in non-byte values when a byte value was wanted. For example: ~1 is NOT $FF, but $FFFFFFFF. Preceding it with a < (take LSB of) will solve the problem. ALL ARITHMETIC IS CARRIED OUT IN 32 BITS. The final Result will be automatically truncated to the maximum that can be handled by the particular machine language (usually a word) when applied to standard mnemonics. \par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631\f1\fs20\tab prec\tab     UNARY\par
+\par
+\tab 20  ~exp    one's complement.\par
+\tab 20  -exp    negation\par
+\tab 20  !exp    not expression (returns 0 if exp non-zero, 1 if exp zero)\par
+\tab 20  <exp    take LSB byte of a 16 bit expression\par
+\tab 20  >exp    take MSB byte of an expression\par
+\par
+\tab\tab     BINARY\par
+\par
+\tab 19  *\tab     multiplication\par
+\tab 19  /\tab     division\par
+\tab 19  %\tab     mod\par
+\tab 18  +\tab     addition\par
+\tab 18  -\tab     subtraction\par
+\tab 17  >>,<<   shift right, shift left\par
+\tab 16  >,>=    greater, greater equal\par
+\tab 16  <,<=    smaller, smaller equal\par
+\tab 15  ==\tab     equal to.  Try to use this instead of =\par
+\tab 15  =\tab     exactly the same as == (exists compatibility)\par
+\tab 15  !=\tab     not equal to\par
+\tab 14  &\tab     logical and\par
+\tab 13  ^\tab     logical xor\par
+\tab 12  |\tab     logical or\par
+\tab 11  &&\tab     left expression is true AND right expression is true\par
+\tab 10  ||\tab     left expression is true OR right expression is true\par
+\tab  9  ?\tab     if left expression is true, result is right expression,\par
+\tab\tab     else result is 0.\tab [10 ? 20] returns 20\par
+\tab  8  []\tab     group expressions\par
+\tab  7  ,\tab     separate expressions in list (also used in\par
+\tab\tab     addressing mode resolution, BE CAREFUL!\par
+\par
+    Constants:\par
+\par
+\tab nnn\tab decimal\par
+\tab 0nnn\tab octal\par
+\tab %nnn\tab binary\par
+\tab $nnn\tab hex\par
+\tab 'c      character\par
+\tab "cc.."  string (NOT zero terminated if in DC/DS/DV)\par
+\tab [exp]d\tab the constant expressions is evaluated and it's decimal\par
+\tab\tab result turned into an ASCII string.\par
+\par
+    Symbols:\par
+\par
+\tab ...\tab -holds CHECKSUM so far (of actual-generated stuff)\par
+\tab ..\tab -holds evaluated value in DV pseudo-op\par
+\tab .name\tab -represents a temporary symbol name.  Temporary symbols\par
+\tab\tab  may be reused inside MACROS and between SUBROUTINES, but\par
+\tab\tab  may not be referenced across macros or across SUBROUTINEs.\par
+\tab .\tab -current program counter (as of the beginning of the\par
+\tab\tab  instruction).\par
+\tab name\tab -beginning with an alpha character and containing letters,\par
+\tab\tab  numbers, or '_'.  Represents some global symbol name.\par
+
+\pard\keepn\sb100\sa100\b\f0\fs36 WHY codes: \par
+
+\pard\sb100\sa100\b0\fs24 Each bit in the WHY word (verbose option 1) is a reason (why the assembler needs to do another pass), as follows: \par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631\f1\fs20     bit 0   expression in mnemonic not resolved\par
+\tab 1   -\par
+\tab 2   expression in a DC not resolved\par
+\tab 3   expression in a DV not resolved (probably in DV's EQM symbol)\par
+\tab 4   expression in a DV not resolved (could be in DV's EQM symbol)\par
+\tab 5   expression in a DS not resolved\par
+\tab 6   expression in an ALIGN not resolved\par
+\tab 7   ALIGN: Relocatable origin not known (if in RORG at the time)\par
+\tab 8   ALIGN: Normal origin not known\tab (if in ORG at the time)\par
+\tab 9   EQU:   expression not resolved\par
+\tab 10  EQU:   value mismatch from previous pass (phase error)\par
+\tab 11  IF:     expression not resolved\par
+\tab 12  REPEAT: expression not resolved\par
+\par
+\tab 13  a program label has been defined after it has been\par
+\tab     referenced (forward reference) and thus we need another\par
+\tab     pass\par
+\tab 14  a program label's value is different from that of the\par
+\tab     previous pass (phase error)\par
+
+\pard\sb100\sa100\f0\fs24 Certain errors will cause the assembly to abort immediately, others will wait until the current pass is over before terminating assembly. All remining types of error allow another pass to occur in the hopes the error will fix itself. \par
+
+\pard\sa200\sl276\slmult1\f2\fs22\lang9\par
+}
+ 
